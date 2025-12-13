@@ -10,6 +10,7 @@ This GNOME Shell extension displays a countdown timer in your panel showing the 
 
 This extension is inspired by Vsauce's Death Clock concept:
 - **Video**: [How Long Will You Live?](https://www.youtube.com/watch?v=xHd4zsIbXJ0&t=157s)
+- **Physical Product / Where to buy**: [INQ Death Clock](https://inqfactory.com/pages/death-clock)
 
 ## Features
 
@@ -48,9 +49,9 @@ This extension is inspired by Vsauce's Death Clock concept:
 
 ## License
 
-This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 2 of the License, or (at your option) any later version.
+This project is distributed under the terms of the GNU General Public License v2 (or later). See the `LICENSE` file for the full text.
 
-See the extension.js file for the complete license text.
+SPDX-License-Identifier: GPL-2.0-or-later
 
 ## Contributing
 
