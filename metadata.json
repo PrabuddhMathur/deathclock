@@ -1,0 +1,10 @@
+{
+  "name": "Death Clock",
+  "description": "A clock that counts down the seconds you have left to live",
+  "uuid": "deathclock@prabuddh.in",
+  "shell-version": [
+    "48"
+  ],
+  "url": "https://github.com/PrabuddhMathur/deathclock"
+
+}

@@ -1,0 +1,36 @@
+/* Death Clock Extension Styling */
+
+.death-clock-label {
+    font-weight: bold;
+    font-size: 11pt;
+    padding: 0 8px;
+}
+
+.death-clock-date-item {
+    font-weight: 600;
+    color: #ffffff !important;
+}
+
+.death-clock-date-item:insensitive {
+    color: #ffffff !important;
+}
+
+.death-clock-dialog {
+    min-width: 400px;
+}
+
+.death-clock-dialog-content {
+    padding: 20px;
+    gap: 15px;
+}
+
+.death-clock-dialog-label {
+    font-size: 11pt;
+    font-weight: bold;
+}
+
+.death-clock-dialog-entry {
+    padding: 8px;
+    font-size: 11pt;
+    min-width: 300px;
+}
