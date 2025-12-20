@@ -1,6 +1,6 @@
 # Death Clock
 
-A clock that counts down the seconds you have left to live
+A clock that counts down the seconds you have left to live.
 
 ## Description
 
@@ -45,7 +45,9 @@ This extension is inspired by Vsauce's Death Clock concept:
 
 ## Requirements
 
-- GNOME Shell 48
+- GNOME Shell Versions:
+  - 48
+  - 49
 
 ## License
 
