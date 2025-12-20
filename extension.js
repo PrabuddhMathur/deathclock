@@ -58,6 +58,7 @@ class DeathClockIndicator extends PanelMenu.Button {
         this._showIcon = true;
         this._numberFormat = NUMBER_FORMATS.INTERNATIONAL;
         this._timeout = null;
+        this._saveTimeout = null;
         
         // Load settings
         this._loadSettings();
@@ -80,35 +81,58 @@ class DeathClockIndicator extends PanelMenu.Button {
     _loadSettings() {
         try {
             let file = Gio.File.new_for_path(this._settingsFile);
-            if (file.query_exists(null)) {
-                let [success, contents] = file.load_contents(null);
-                if (success) {
-                    let settings = JSON.parse(new TextDecoder().decode(contents));
-                    if (settings.targetDate) {
-                        this._targetDate = new Date(settings.targetDate);
+
+            // Asynchronously load settings to avoid blocking the GNOME Shell main loop
+            file.load_contents_async(null, (source, res) => {
+                try {
+                    let [success, contents] = source.load_contents_finish(res);
+                    if (success && contents) {
+                        let settings = JSON.parse(new TextDecoder().decode(contents));
+                        if (settings.targetDate) {
+                            this._targetDate = new Date(settings.targetDate);
+                        }
+                        if (settings.unit) {
+                            this._currentUnit = settings.unit;
+                        }
+                        if (settings.showUnitText !== undefined) {
+                            this._showUnitText = settings.showUnitText;
+                        }
+                        if (settings.showIcon !== undefined) {
+                            this._showIcon = settings.showIcon;
+                        }
+                        if (settings.numberFormat) {
+                            this._numberFormat = settings.numberFormat;
+                        }
                     }
-                    if (settings.unit) {
-                        this._currentUnit = settings.unit;
+                } catch (e) {
+                    console.error(`Death Clock: Error loading settings: ${e}`);
+                } finally {
+                    // Ensure we have a sensible default target date
+                    if (!this._targetDate) {
+                        this._targetDate = new Date();
+                        this._targetDate.setFullYear(this._targetDate.getFullYear() + 80);
                     }
-                    if (settings.showUnitText !== undefined) {
-                        this._showUnitText = settings.showUnitText;
-                    }
-                    if (settings.showIcon !== undefined) {
-                        this._showIcon = settings.showIcon;
-                    }
-                    if (settings.numberFormat) {
-                        this._numberFormat = settings.numberFormat;
+
+                    // Update UI/menu to reflect loaded settings
+                    try {
+                        this._updateDateDisplay();
+                        if (this._unitMenuItems) this._updateUnitMenuItems();
+                        if (this._formatMenuItems) this._updateFormatMenuItems();
+                        this._updateDisplay();
+                    } catch (e) {
+                        // Swallow UI update errors but log them
+                        console.error(`Death Clock: Error updating UI after loading settings: ${e}`);
                     }
                 }
-            }
+            });
         } catch (e) {
-            log(`Death Clock: Error loading settings: ${e}`);
-        }
-        
-        // Set default target date if none exists (80 years from today)
-        if (!this._targetDate) {
-            this._targetDate = new Date();
-            this._targetDate.setFullYear(this._targetDate.getFullYear() + 80);
+            console.error(`Death Clock: Error starting async load of settings: ${e}`);
+
+            // Fallback: set default target date if load failed to start
+            if (!this._targetDate) {
+                this._targetDate = new Date();
+                this._targetDate.setFullYear(this._targetDate.getFullYear() + 80);
+            }
         }
     }
     
@@ -122,15 +146,43 @@ class DeathClockIndicator extends PanelMenu.Button {
                 numberFormat: this._numberFormat
             };
             let file = Gio.File.new_for_path(this._settingsFile);
-            file.replace_contents(
-                JSON.stringify(settings),
-                null,
-                false,
-                Gio.FileCreateFlags.REPLACE_DESTINATION,
-                null
+            // Use async replace to avoid blocking GNOME Shell
+            let contents = JSON.stringify(settings);
+            file.replace_contents_async(contents, null, false, Gio.FileCreateFlags.REPLACE_DESTINATION, null,
+                (source, res) => {
+                    try {
+                        source.replace_contents_finish(res);
+                    } catch (e) {
+                        console.error(`Death Clock: Error saving settings (async): ${e}`);
+                    }
+                }
             );
         } catch (e) {
-            log(`Death Clock: Error saving settings: ${e}`);
+            console.error(`Death Clock: Error saving settings: ${e}`);
+        }
+    }
+
+    _scheduleSave(delayMs = 1000) {
+        // Debounce multiple rapid setting changes to avoid excessive disk writes
+        try {
+            if (this._saveTimeout) {
+                try { GLib.source_remove(this._saveTimeout); } catch (e) { /* ignore */ }
+                this._saveTimeout = null;
+            }
+
+            this._saveTimeout = GLib.timeout_add(GLib.PRIORITY_DEFAULT, delayMs, () => {
+                this._saveTimeout = null;
+                try {
+                    this._saveSettings();
+                } catch (e) {
+                    console.error(`Death Clock: Error during scheduled save: ${e}`);
+                }
+                return GLib.SOURCE_REMOVE;
+            });
+        } catch (e) {
+            console.error(`Death Clock: Failed to schedule save: ${e}`);
+            // Fallback: immediate save
+            this._saveSettings();
         }
     }
     
@@ -283,7 +335,7 @@ class DeathClockIndicator extends PanelMenu.Button {
                 this._currentUnit = unit;
                 this._updateUnitMenuItems();
                 this._updateDisplay();
-                this._saveSettings();
+                this._scheduleSave();
             });
             this.menu.addMenuItem(item);
             this._unitMenuItems[unit] = item;
@@ -306,7 +358,7 @@ class DeathClockIndicator extends PanelMenu.Button {
             this._numberFormat = NUMBER_FORMATS.NONE;
             this._updateFormatMenuItems();
             this._updateDisplay();
-            this._saveSettings();
+            this._scheduleSave();
         });
         this.menu.addMenuItem(noCommasItem);
         this._formatMenuItems[NUMBER_FORMATS.NONE] = noCommasItem;
@@ -318,7 +370,7 @@ class DeathClockIndicator extends PanelMenu.Button {
             this._numberFormat = NUMBER_FORMATS.INDIAN;
             this._updateFormatMenuItems();
             this._updateDisplay();
-            this._saveSettings();
+            this._scheduleSave();
         });
         this.menu.addMenuItem(indianItem);
         this._formatMenuItems[NUMBER_FORMATS.INDIAN] = indianItem;
@@ -330,7 +382,7 @@ class DeathClockIndicator extends PanelMenu.Button {
             this._numberFormat = NUMBER_FORMATS.INTERNATIONAL;
             this._updateFormatMenuItems();
             this._updateDisplay();
-            this._saveSettings();
+            this._scheduleSave();
         });
         this.menu.addMenuItem(intlItem);
         this._formatMenuItems[NUMBER_FORMATS.INTERNATIONAL] = intlItem;
@@ -351,7 +403,7 @@ class DeathClockIndicator extends PanelMenu.Button {
             this._showUnitText = !this._showUnitText;
             unitTextItem.label.text = this._showUnitText ? '✓ Show Unit Text' : '   Show Unit Text';
             this._updateDisplay();
-            this._saveSettings();
+            this._scheduleSave();
         });
         this.menu.addMenuItem(unitTextItem);
         
@@ -363,7 +415,7 @@ class DeathClockIndicator extends PanelMenu.Button {
             this._showIcon = !this._showIcon;
             iconItem.label.text = this._showIcon ? '✓ Show Icon' : '   Show Icon';
             this._updateDisplay();
-            this._saveSettings();
+            this._scheduleSave();
         });
         this.menu.addMenuItem(iconItem);
     }
@@ -456,8 +508,8 @@ class DeathClockIndicator extends PanelMenu.Button {
                         this._targetDate = newDate;
                         this._updateDateDisplay();
                         this._updateDisplay();
-                        this._saveSettings();
-                        Main.notify('Death Clock', `Date set to ${newDate.toLocaleDateString()}`);
+                        this._scheduleSave();
+                        Main.notify('Death Clock', `Date set to ${newDate.toISOString().split('T')[0]}`);
                     }
                 } catch (e) {
                     Main.notify('Death Clock', 'Invalid date format');
@@ -472,6 +524,17 @@ class DeathClockIndicator extends PanelMenu.Button {
     }
     
     destroy() {
+        // Flush any pending saves before destruction
+        if (this._saveTimeout) {
+            try { GLib.source_remove(this._saveTimeout); } catch (e) { /* ignore */ }
+            this._saveTimeout = null;
+            try {
+                this._saveSettings();
+            } catch (e) {
+                console.error(`Death Clock: Error saving settings during destroy: ${e}`);
+            }
+        }
+
         if (this._timeout) {
             GLib.source_remove(this._timeout);
             this._timeout = null;
