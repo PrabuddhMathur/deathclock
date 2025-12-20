@@ -164,26 +164,16 @@ class DeathClockIndicator extends PanelMenu.Button {
 
     _scheduleSave(delayMs = 1000) {
         // Debounce multiple rapid setting changes to avoid excessive disk writes
-        try {
-            if (this._saveTimeout) {
-                try { GLib.source_remove(this._saveTimeout); } catch (e) { /* ignore */ }
-                this._saveTimeout = null;
-            }
-
-            this._saveTimeout = GLib.timeout_add(GLib.PRIORITY_DEFAULT, delayMs, () => {
-                this._saveTimeout = null;
-                try {
-                    this._saveSettings();
-                } catch (e) {
-                    console.error(`Death Clock: Error during scheduled save: ${e}`);
-                }
-                return GLib.SOURCE_REMOVE;
-            });
-        } catch (e) {
-            console.error(`Death Clock: Failed to schedule save: ${e}`);
-            // Fallback: immediate save
-            this._saveSettings();
+        if (this._saveTimeout) {
+            GLib.source_remove(this._saveTimeout);
+            this._saveTimeout = null;
         }
+
+        this._saveTimeout = GLib.timeout_add(GLib.PRIORITY_DEFAULT, delayMs, () => {
+            this._saveTimeout = null;
+            this._saveSettings();
+            return GLib.SOURCE_REMOVE;
+        });
     }
     
     _calculateDifference() {
@@ -498,21 +488,17 @@ class DeathClockIndicator extends PanelMenu.Button {
             label: 'Set Date',
             action: () => {
                 let dateText = entry.get_text();
-                try {
-                    let newDate = new Date(dateText);
-                    if (isNaN(newDate.getTime())) {
-                        Main.notify('Death Clock', 'Invalid date format');
-                    } else if (newDate <= new Date()) {
-                        Main.notify('Death Clock', 'Date must be in the future');
-                    } else {
-                        this._targetDate = newDate;
-                        this._updateDateDisplay();
-                        this._updateDisplay();
-                        this._scheduleSave();
-                        Main.notify('Death Clock', `Date set to ${newDate.toISOString().split('T')[0]}`);
-                    }
-                } catch (e) {
+                let newDate = new Date(dateText);
+                if (isNaN(newDate.getTime())) {
                     Main.notify('Death Clock', 'Invalid date format');
+                } else if (newDate <= new Date()) {
+                    Main.notify('Death Clock', 'Date must be in the future');
+                } else {
+                    this._targetDate = newDate;
+                    this._updateDateDisplay();
+                    this._updateDisplay();
+                    this._scheduleSave();
+                    Main.notify('Death Clock', `Date set to ${newDate.toISOString()}`);
                 }
                 dialog.close();
             },
@@ -526,13 +512,9 @@ class DeathClockIndicator extends PanelMenu.Button {
     destroy() {
         // Flush any pending saves before destruction
         if (this._saveTimeout) {
-            try { GLib.source_remove(this._saveTimeout); } catch (e) { /* ignore */ }
+            GLib.source_remove(this._saveTimeout);
             this._saveTimeout = null;
-            try {
-                this._saveSettings();
-            } catch (e) {
-                console.error(`Death Clock: Error saving settings during destroy: ${e}`);
-            }
+            this._saveSettings();
         }
 
         if (this._timeout) {
