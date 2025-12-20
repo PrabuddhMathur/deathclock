@@ -49,6 +49,11 @@ This extension is inspired by Vsauce's Death Clock concept:
   - 48
   - 49
 
+## GNOME Extensions Listing
+
+This extension is under review on the GNOME Extensions and it will be available here:
+- https://extensions.gnome.org/extension/9012/death-clock/
+
 ## License
 
 This project is distributed under the terms of the GNU General Public License v2 (or later). See the `LICENSE` file for the full text.
