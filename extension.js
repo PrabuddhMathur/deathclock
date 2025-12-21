@@ -79,87 +79,68 @@ class DeathClockIndicator extends PanelMenu.Button {
     }
     
     _loadSettings() {
-        try {
-            let file = Gio.File.new_for_path(this._settingsFile);
+        let file = Gio.File.new_for_path(this._settingsFile);
 
-            // Asynchronously load settings to avoid blocking the GNOME Shell main loop
-            file.load_contents_async(null, (source, res) => {
-                try {
-                    let [success, contents] = source.load_contents_finish(res);
-                    if (success && contents) {
-                        let settings = JSON.parse(new TextDecoder().decode(contents));
-                        if (settings.targetDate) {
-                            this._targetDate = new Date(settings.targetDate);
-                        }
-                        if (settings.unit) {
-                            this._currentUnit = settings.unit;
-                        }
-                        if (settings.showUnitText !== undefined) {
-                            this._showUnitText = settings.showUnitText;
-                        }
-                        if (settings.showIcon !== undefined) {
-                            this._showIcon = settings.showIcon;
-                        }
-                        if (settings.numberFormat) {
-                            this._numberFormat = settings.numberFormat;
-                        }
+        // Asynchronously load settings to avoid blocking the GNOME Shell main loop
+        file.load_contents_async(null, (source, res) => {
+            try {
+                let [success, contents] = source.load_contents_finish(res);
+                if (success && contents) {
+                    let settings = JSON.parse(new TextDecoder().decode(contents));
+                    if (settings.targetDate) {
+                        this._targetDate = new Date(settings.targetDate);
                     }
-                } catch (e) {
-                    console.error(`Death Clock: Error loading settings: ${e}`);
-                } finally {
-                    // Ensure we have a sensible default target date
-                    if (!this._targetDate) {
-                        this._targetDate = new Date();
-                        this._targetDate.setFullYear(this._targetDate.getFullYear() + 80);
+                    if (settings.unit) {
+                        this._currentUnit = settings.unit;
                     }
-
-                    // Update UI/menu to reflect loaded settings
-                    try {
-                        this._updateDateDisplay();
-                        if (this._unitMenuItems) this._updateUnitMenuItems();
-                        if (this._formatMenuItems) this._updateFormatMenuItems();
-                        this._updateDisplay();
-                    } catch (e) {
-                        // Swallow UI update errors but log them
-                        console.error(`Death Clock: Error updating UI after loading settings: ${e}`);
+                    if (settings.showUnitText !== undefined) {
+                        this._showUnitText = settings.showUnitText;
+                    }
+                    if (settings.showIcon !== undefined) {
+                        this._showIcon = settings.showIcon;
+                    }
+                    if (settings.numberFormat) {
+                        this._numberFormat = settings.numberFormat;
                     }
                 }
-            });
-        } catch (e) {
-            console.error(`Death Clock: Error starting async load of settings: ${e}`);
+            } catch (e) {
+                console.error(`Death Clock: Error loading settings: ${e}`);
+            } finally {
+                // Ensure we have a sensible default target date
+                if (!this._targetDate) {
+                    this._targetDate = new Date();
+                    this._targetDate.setFullYear(this._targetDate.getFullYear() + 80);
+                }
 
-            // Fallback: set default target date if load failed to start
-            if (!this._targetDate) {
-                this._targetDate = new Date();
-                this._targetDate.setFullYear(this._targetDate.getFullYear() + 80);
+                // Update UI/menu to reflect loaded settings
+                this._updateDateDisplay();
+                if (this._unitMenuItems) this._updateUnitMenuItems();
+                if (this._formatMenuItems) this._updateFormatMenuItems();
+                this._updateDisplay();
             }
-        }
+        });
     }
     
     _saveSettings() {
-        try {
-            let settings = {
-                targetDate: this._targetDate.toISOString(),
-                unit: this._currentUnit,
-                showUnitText: this._showUnitText,
-                showIcon: this._showIcon,
-                numberFormat: this._numberFormat
-            };
-            let file = Gio.File.new_for_path(this._settingsFile);
-            // Use async replace to avoid blocking GNOME Shell
-            let contents = JSON.stringify(settings);
-            file.replace_contents_async(contents, null, false, Gio.FileCreateFlags.REPLACE_DESTINATION, null,
-                (source, res) => {
-                    try {
-                        source.replace_contents_finish(res);
-                    } catch (e) {
-                        console.error(`Death Clock: Error saving settings (async): ${e}`);
-                    }
+        let settings = {
+            targetDate: this._targetDate.toISOString(),
+            unit: this._currentUnit,
+            showUnitText: this._showUnitText,
+            showIcon: this._showIcon,
+            numberFormat: this._numberFormat
+        };
+        let file = Gio.File.new_for_path(this._settingsFile);
+        // Use async replace to avoid blocking GNOME Shell
+        let contents = JSON.stringify(settings);
+        file.replace_contents_async(contents, null, false, Gio.FileCreateFlags.REPLACE_DESTINATION, null,
+            (source, res) => {
+                try {
+                    source.replace_contents_finish(res);
+                } catch (e) {
+                    console.error(`Death Clock: Error saving settings: ${e}`);
                 }
-            );
-        } catch (e) {
-            console.error(`Death Clock: Error saving settings: ${e}`);
-        }
+            }
+        );
     }
 
     _scheduleSave(delayMs = 1000) {
