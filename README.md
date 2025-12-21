@@ -28,6 +28,10 @@ This extension is inspired by Vsauce's Death Clock concept:
 
 ## Installation
 
+The easiest way to install is from the GNOME Extensions website: https://extensions.gnome.org/extension/9012/death-clock/
+
+### Manual Installation
+
 1. Copy the extension folder to `~/.local/share/gnome-shell/extensions/`
 2. Restart GNOME Shell (Alt+F2, type `r`, press Enter)
 3. Enable the extension using GNOME Extensions app or:
@@ -48,11 +52,6 @@ This extension is inspired by Vsauce's Death Clock concept:
 - GNOME Shell Versions:
   - 48
   - 49
-
-## GNOME Extensions Listing
-
-This extension is under review on the GNOME Extensions and it will be available here:
-- https://extensions.gnome.org/extension/9012/death-clock/
 
 ## License
 
