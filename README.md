@@ -33,8 +33,9 @@ The easiest way to install is from the GNOME Extensions website: https://extensi
 ### Manual Installation
 
 1. Copy the extension folder to `~/.local/share/gnome-shell/extensions/`
-2. Restart GNOME Shell (Alt+F2, type `r`, press Enter)
-3. Enable the extension using GNOME Extensions app or:
+2. Rename the folder to `deathclock@prabuddh.in`
+3. Restart GNOME Shell (Alt+F2, type `r`, press Enter)
+4. Enable the extension using GNOME Extensions app or:
    ```bash
    gnome-extensions enable deathclock@prabuddh.in
    ```
@@ -50,6 +51,8 @@ The easiest way to install is from the GNOME Extensions website: https://extensi
 ## Requirements
 
 - GNOME Shell Versions:
+  - 46  
+  - 47  
   - 48
   - 49
 
