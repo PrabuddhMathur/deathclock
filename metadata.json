@@ -3,6 +3,8 @@
   "description": "A clock that counts down the seconds you have left to live",
   "uuid": "deathclock@prabuddh.in",
   "shell-version": [
+    "46",
+    "47",
     "48",
     "49"
   ],
