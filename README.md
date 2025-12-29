@@ -9,7 +9,7 @@ This GNOME Shell extension displays a countdown timer in your panel showing the 
 ## Inspiration
 
 This extension is inspired by Vsauce's Death Clock concept:
-- **Video**: [How Long Will You Live?](https://www.youtube.com/watch?v=xHd4zsIbXJ0&t=157s)
+- **Video**: [All The Ghosts You Will Be](https://www.youtube.com/watch?v=xHd4zsIbXJ0&t=157s)
 - **Physical Product / Where to buy**: [INQ Death Clock](https://inqfactory.com/pages/death-clock)
 
 ## Features
